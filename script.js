@@ -1,70 +1,84 @@
-const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-let pc = new RTCPeerConnection(servers);
-let socket;
-let roomId;
-
+const createRoomBtn = document.getElementById("createRoomBtn");
+const joinBtn = document.getElementById("joinBtn");
+const roomInput = document.getElementById("roomInput");
+const callArea = document.getElementById("callArea");
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
+const hangupBtn = document.getElementById("hangupBtn");
+const shareLink = document.getElementById("shareLink");
 
-navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-  localVideo.srcObject = stream;
-  stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-});
+let pc, ws;
 
-pc.ontrack = (event) => {
-  remoteVideo.srcObject = event.streams[0];
+// Generate random room ID
+function generateRoomID() {
+  return Math.random().toString(36).substring(2, 10);
+}
+
+// Create new room
+createRoomBtn.onclick = () => {
+  const roomId = generateRoomID();
+  roomInput.value = roomId;
+  alert(`Room created! Share this ID: ${roomId}`);
+  startCall(roomId);
 };
 
-document.getElementById("createRoom").onclick = () => {
-  roomId = Math.random().toString(36).substring(2, 8);
-  const link = `${window.location.origin}?room=${roomId}`;
-  document.getElementById("roomLink").value = link;
-  startWebSocket(roomId, true);
+// Join existing room
+joinBtn.onclick = () => {
+  const roomId = roomInput.value.trim();
+  if (!roomId) return alert("Please enter a room ID");
+  startCall(roomId);
 };
 
-const urlRoom = new URLSearchParams(window.location.search).get("room");
-if (urlRoom) startWebSocket(urlRoom, false);
+// Hangup
+hangupBtn.onclick = () => {
+  if (pc) pc.close();
+  if (ws) ws.close();
+  location.reload();
+};
 
-function startWebSocket(room, isCaller) {
-  const wsUrl = `${window.location.origin.replace(/^http/, "ws")}/api/ws?room=${room}`;
-  socket = new WebSocket(wsUrl);
+// Start WebRTC call
+async function startCall(roomId) {
+  pc = new RTCPeerConnection();
+  const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  localVideo.srcObject = localStream;
 
-  socket.addEventListener("open", async () => {
-    if (isCaller) {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.send(JSON.stringify({ offer }));
-    }
-  });
+  pc.ontrack = event => {
+    remoteVideo.srcObject = event.streams[0];
+  };
 
-  socket.onmessage = async (event) => {
+  // Connect to Render backend
+  const wsUrl = `wss://webrtc2-ax2m.onrender.com/?room=${roomId}`;
+  ws = new WebSocket(wsUrl);
+
+  ws.onmessage = async (event) => {
     const data = JSON.parse(event.data);
-
-    if (data.answer) {
-      await pc.setRemoteDescription(data.answer);
-    } else if (data.offer) {
-      await pc.setRemoteDescription(data.offer);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.send(JSON.stringify({ answer }));
+    if (data.sdp) {
+      await pc.setRemoteDescription(data.sdp);
+      if (data.sdp.type === "offer") {
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        ws.send(JSON.stringify({ sdp: pc.localDescription }));
+      }
     } else if (data.candidate) {
       try {
         await pc.addIceCandidate(data.candidate);
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error("Error adding ICE candidate:", err);
       }
     }
   };
 
-  pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ candidate: event.candidate }));
-      } else {
-        socket.addEventListener("open", () => {
-          socket.send(JSON.stringify({ candidate: event.candidate }));
-        });
-      }
-    }
+  ws.onopen = async () => {
+    pc.onicecandidate = (event) => {
+      if (event.candidate) ws.send(JSON.stringify({ candidate: event.candidate }));
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    ws.send(JSON.stringify({ sdp: pc.localDescription }));
+
+    callArea.classList.remove("hidden");
+    shareLink.textContent = `Share this room link: ${window.location.origin}?room=${roomId}`;
   };
 }
