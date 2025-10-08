@@ -9,6 +9,8 @@ const shareLink = document.getElementById("shareLink");
 const copyLinkBtn = document.getElementById("copyLinkBtn");
 
 let pc, ws;
+let makingOffer = false;
+let ignoreOffer = false;
 
 // Generate random room ID
 function generateRoomID() {
@@ -38,7 +40,8 @@ hangupBtn.onclick = () => {
 
 // Copy link
 copyLinkBtn.onclick = () => {
-  navigator.clipboard.writeText(window.location.href + "?room=" + roomInput.value)
+  const link = `${window.location.origin}?room=${roomInput.value}`;
+  navigator.clipboard.writeText(link)
     .then(() => alert("Link copied!"))
     .catch(() => alert("Failed to copy link"));
 };
@@ -72,15 +75,24 @@ async function startCall(roomId) {
     }
 
     if (data.sdp) {
-      await pc.setRemoteDescription(data.sdp);
-      if (data.sdp.type === "offer") {
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        ws.send(JSON.stringify({ sdp: pc.localDescription }));
+      const offerCollision = data.sdp.type === "offer" && (makingOffer || pc.signalingState !== "stable");
+      ignoreOffer = !offerCollision;
+
+      try {
+        if (data.sdp.type === "offer" && !ignoreOffer) {
+          await pc.setRemoteDescription(data.sdp);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          ws.send(JSON.stringify({ sdp: pc.localDescription }));
+        } else if (data.sdp.type === "answer" && pc.signalingState === "have-local-offer") {
+          await pc.setRemoteDescription(data.sdp);
+        }
+      } catch (err) {
+        console.error("SDP error:", err);
       }
     } else if (data.candidate) {
       try { await pc.addIceCandidate(data.candidate); }
-      catch (err) { console.error("Error adding ICE candidate:", err); }
+      catch (err) { console.error("ICE error:", err); }
     }
   };
 
@@ -89,9 +101,16 @@ async function startCall(roomId) {
       if (event.candidate) ws.send(JSON.stringify({ candidate: event.candidate }));
     };
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    ws.send(JSON.stringify({ sdp: pc.localDescription }));
+    try {
+      makingOffer = true;
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      ws.send(JSON.stringify({ sdp: pc.localDescription }));
+    } catch (err) {
+      console.error("Offer error:", err);
+    } finally {
+      makingOffer = false;
+    }
 
     callArea.classList.remove("hidden");
     shareLink.textContent = `Share this room link: ${window.location.origin}?room=${roomId}`;
