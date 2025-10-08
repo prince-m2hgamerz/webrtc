@@ -1,20 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>M2H Web Call</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M2H Web Calling</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <h2>🌐 M2H Web Call</h2>
-  <div class="video-container">
-    <video id="localVideo" autoplay playsinline muted></video>
-    <video id="remoteVideo" autoplay playsinline></video>
+<body class="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 font-[Poppins] text-white">
+
+  <div class="bg-white/10 backdrop-blur-2xl shadow-2xl border border-white/20 p-8 rounded-3xl w-[90%] max-w-md text-center transition-transform hover:scale-[1.02]">
+    <h1 class="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-pink-300 to-blue-400">M2H Web Calling</h1>
+    <p class="text-sm mb-6 text-gray-200/90">Start a secure peer-to-peer video call — no signup, no phone number.</p>
+
+    <!-- Room Buttons -->
+    <div class="flex flex-col gap-3 mb-4">
+      <button id="createRoomBtn" class="px-5 py-3 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 hover:from-blue-500 hover:to-green-400 transition-all font-semibold shadow-md">
+        🌟 Create New Call
+      </button>
+
+      <div class="flex gap-2">
+        <input id="roomInput" placeholder="Enter Room ID" class="w-full p-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-gray-300 outline-none focus:ring-2 focus:ring-pink-400 transition-all" />
+        <button id="joinBtn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 hover:from-purple-500 hover:to-pink-500 transition-all font-semibold shadow-md">
+          Join
+        </button>
+      </div>
+    </div>
+
+    <!-- Call Area -->
+    <div id="callArea" class="hidden flex flex-col gap-4 mt-6">
+      <div class="grid grid-cols-2 gap-3">
+        <video id="localVideo" autoplay muted playsinline class="rounded-2xl border-2 border-white/30 shadow-lg"></video>
+        <video id="remoteVideo" autoplay playsinline class="rounded-2xl border-2 border-white/30 shadow-lg"></video>
+      </div>
+
+      <button id="hangupBtn" class="w-full mt-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-orange-500 hover:to-red-500 transition-all px-4 py-2 rounded-xl font-semibold shadow-lg">
+        🔴 End Call
+      </button>
+
+      <p id="shareLink" class="text-sm mt-2 text-gray-200/80 break-words"></p>
+    </div>
   </div>
 
-  <button id="createRoom">Create Room</button>
-  <input type="text" id="roomLink" readonly />
+  <footer class="absolute bottom-3 text-sm text-white/70">
+    © 2025 M2H Web Solution
+  </footer>
 
   <script src="script.js"></script>
 </body>
