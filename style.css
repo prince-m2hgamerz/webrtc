@@ -15,24 +15,22 @@ video {
   border-radius: 10px;
   background: #000;
 }
-textarea {
-  width: 90%;
-  height: 100px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: none;
-  padding: 8px;
-}
 button {
-  margin: 10px;
+  margin: 15px;
   padding: 10px 20px;
+  background: #22d3ee;
   border: none;
   border-radius: 8px;
-  background: #22d3ee;
   color: #000;
   font-weight: bold;
   cursor: pointer;
 }
 button:hover {
   background: #06b6d4;
+}
+input {
+  width: 80%;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
 }
