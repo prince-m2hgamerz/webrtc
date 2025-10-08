@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Calling - M2H</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h2>🌐 M2H Web Calling (No Database)</h2>
+
+  <div class="video-container">
+    <video id="localVideo" autoplay playsinline muted></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
+
+  <div class="controls">
+    <button id="startCall">Create Offer</button>
+    <textarea id="offer" placeholder="Offer SDP"></textarea>
+
+    <button id="answerCall">Answer</button>
+    <textarea id="answer" placeholder="Answer SDP"></textarea>
+
+    <button id="addAnswer">Add Answer</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
