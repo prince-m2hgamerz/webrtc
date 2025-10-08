@@ -1,8 +1,7 @@
-const servers = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-};
-
+const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 let pc = new RTCPeerConnection(servers);
+let socket;
+let roomId;
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
@@ -16,26 +15,49 @@ pc.ontrack = (event) => {
   remoteVideo.srcObject = event.streams[0];
 };
 
-// ----- OFFER -----
-document.getElementById("startCall").onclick = async () => {
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  document.getElementById("offer").value = JSON.stringify(pc.localDescription);
+// ---- create/join room ----
+document.getElementById("createRoom").onclick = () => {
+  roomId = Math.random().toString(36).substring(2, 8);
+  const link = `${window.location.origin}?room=${roomId}`;
+  document.getElementById("roomLink").value = link;
+  startWebSocket(roomId, true);
 };
 
-// ----- ANSWER -----
-document.getElementById("answerCall").onclick = async () => {
-  const offer = JSON.parse(document.getElementById("offer").value);
-  await pc.setRemoteDescription(offer);
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  document.getElementById("answer").value = JSON.stringify(pc.localDescription);
-};
+const urlRoom = new URLSearchParams(window.location.search).get("room");
+if (urlRoom) startWebSocket(urlRoom, false);
 
-// ----- ADD ANSWER -----
-document.getElementById("addAnswer").onclick = async () => {
-  const answer = JSON.parse(document.getElementById("answer").value);
-  if (!pc.currentRemoteDescription) {
-    await pc.setRemoteDescription(answer);
+// ---- signaling via WebSocket ----
+function startWebSocket(room, isCaller) {
+  socket = new WebSocket(`${window.location.origin.replace("https", "wss")}/api/ws?room=${room}`);
+
+  socket.onmessage = async (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.answer) await pc.setRemoteDescription(data.answer);
+    else if (data.offer) {
+      await pc.setRemoteDescription(data.offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.send(JSON.stringify({ answer }));
+    } else if (data.candidate) {
+      try {
+        await pc.addIceCandidate(data.candidate);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate) socket.send(JSON.stringify({ candidate: event.candidate }));
+  };
+
+  if (isCaller) {
+    pc.createOffer().then((offer) => {
+      pc.setLocalDescription(offer);
+      socket.addEventListener("open", () => {
+        socket.send(JSON.stringify({ offer }));
+      });
+    });
   }
-};
+}
