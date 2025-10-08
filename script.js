@@ -6,6 +6,7 @@ const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const hangupBtn = document.getElementById("hangupBtn");
 const shareLink = document.getElementById("shareLink");
+const copyLinkBtn = document.getElementById("copyLinkBtn");
 
 let pc, ws;
 
@@ -18,7 +19,6 @@ function generateRoomID() {
 createRoomBtn.onclick = () => {
   const roomId = generateRoomID();
   roomInput.value = roomId;
-  alert(`Room created! Share this ID: ${roomId}`);
   startCall(roomId);
 };
 
@@ -34,6 +34,13 @@ hangupBtn.onclick = () => {
   if (pc) pc.close();
   if (ws) ws.close();
   location.reload();
+};
+
+// Copy link
+copyLinkBtn.onclick = () => {
+  navigator.clipboard.writeText(window.location.href + "?room=" + roomInput.value)
+    .then(() => alert("Link copied!"))
+    .catch(() => alert("Failed to copy link"));
 };
 
 // Start WebRTC call
@@ -52,7 +59,18 @@ async function startCall(roomId) {
   ws = new WebSocket(wsUrl);
 
   ws.onmessage = async (event) => {
-    const data = JSON.parse(event.data);
+    let data;
+
+    // Convert Blob to text if needed
+    if (event.data instanceof Blob) {
+      const text = await event.data.text();
+      try { data = JSON.parse(text); } 
+      catch (err) { console.error("Failed to parse JSON from Blob:", err); return; }
+    } else {
+      try { data = JSON.parse(event.data); } 
+      catch (err) { console.error("Failed to parse JSON:", err, event.data); return; }
+    }
+
     if (data.sdp) {
       await pc.setRemoteDescription(data.sdp);
       if (data.sdp.type === "offer") {
@@ -61,11 +79,8 @@ async function startCall(roomId) {
         ws.send(JSON.stringify({ sdp: pc.localDescription }));
       }
     } else if (data.candidate) {
-      try {
-        await pc.addIceCandidate(data.candidate);
-      } catch (err) {
-        console.error("Error adding ICE candidate:", err);
-      }
+      try { await pc.addIceCandidate(data.candidate); }
+      catch (err) { console.error("Error adding ICE candidate:", err); }
     }
   };
 
