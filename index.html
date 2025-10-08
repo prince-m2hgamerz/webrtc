@@ -13,7 +13,6 @@
     <h1 class="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-pink-300 to-blue-400">M2H Web Calling</h1>
     <p class="text-sm mb-6 text-gray-200/90">Start a secure peer-to-peer video call — no signup, no phone number.</p>
 
-    <!-- Room Buttons -->
     <div class="flex flex-col gap-3 mb-4">
       <button id="createRoomBtn" class="px-5 py-3 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 hover:from-blue-500 hover:to-green-400 transition-all font-semibold shadow-md">
         🌟 Create New Call
@@ -27,16 +26,20 @@
       </div>
     </div>
 
-    <!-- Call Area -->
     <div id="callArea" class="hidden flex flex-col gap-4 mt-6">
       <div class="grid grid-cols-2 gap-3">
         <video id="localVideo" autoplay muted playsinline class="rounded-2xl border-2 border-white/30 shadow-lg"></video>
         <video id="remoteVideo" autoplay playsinline class="rounded-2xl border-2 border-white/30 shadow-lg"></video>
       </div>
 
-      <button id="hangupBtn" class="w-full mt-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-orange-500 hover:to-red-500 transition-all px-4 py-2 rounded-xl font-semibold shadow-lg">
-        🔴 End Call
-      </button>
+      <div class="flex gap-2 mt-3">
+        <button id="hangupBtn" class="flex-1 bg-gradient-to-r from-red-500 to-orange-500 hover:from-orange-500 hover:to-red-500 transition-all px-4 py-2 rounded-xl font-semibold shadow-lg">
+          🔴 End Call
+        </button>
+        <button id="copyLinkBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-purple-500 hover:to-blue-500 transition-all px-4 py-2 rounded-xl font-semibold shadow-lg">
+          📋 Copy Link
+        </button>
+      </div>
 
       <p id="shareLink" class="text-sm mt-2 text-gray-200/80 break-words"></p>
     </div>
