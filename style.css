@@ -1,36 +1,30 @@
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background: #0f172a;
-  color: #fff;
-  padding: 20px;
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  scroll-behavior: smooth;
 }
-.video-container {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
+
 video {
-  width: 40%;
-  border-radius: 10px;
-  background: #000;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  background-color: rgba(0, 0, 0, 0.4);
+  object-fit: cover;
 }
+
 button {
-  margin: 15px;
-  padding: 10px 20px;
-  background: #22d3ee;
-  border: none;
-  border-radius: 8px;
-  color: #000;
-  font-weight: bold;
-  cursor: pointer;
+  transition: all 0.3s ease;
 }
 button:hover {
-  background: #06b6d4;
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
 }
-input {
-  width: 80%;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
+
+#callArea {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
